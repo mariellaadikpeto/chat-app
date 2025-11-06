@@ -12,6 +12,17 @@ if (!isset($_SESSION['utilisateur_id']) || !isset($_GET['user_id'])) {
 $utilisateur_id = $_SESSION['utilisateur_id'];
 $destinataire_id = intval($_GET['user_id']);
 
+// Vérifier que le destinataire existe
+$stmt = $conn->prepare("SELECT id FROM utilisateurs WHERE id = ?");
+$stmt->bind_param("i", $destinataire_id);
+$stmt->execute();
+$res = $stmt->get_result();
+if ($res->num_rows === 0) {
+    echo json_encode([]);
+    exit;
+}
+$stmt->close();
+
 $sql = "SELECT * FROM message 
         WHERE (utilisateur_1 = ? AND utilisateur_2 = ?) 
            OR (utilisateur_1 = ? AND utilisateur_2 = ?)
@@ -27,7 +38,7 @@ while($row = $res->fetch_assoc()){
     $messages[] = [
         'message_id' => $row['message_id'],
         'utilisateur_id' => $row['utilisateur_1'],
-        'texte' => $row['texte'],
+        'texte' => htmlspecialchars($row['texte']),
         'heure' => date('H:i', strtotime($row['heure']))
     ];
 }
